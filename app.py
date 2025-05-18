@@ -1,29 +1,22 @@
+# main.py
+
 from flask import Flask, request, jsonify
-from ariadne import QueryType, make_executable_schema, graphql_sync
+from flask_cors import CORS
+from ariadne import graphql_sync
 from ariadne.explorer import ExplorerGraphiQL
-
-type_defs = """
-    type Query {
-        hello(name: String!): String!
-    }
-"""
-
-query = QueryType()
-
-@query.field("hello")
-def resolve_hello(_, info, name):
-    return f"Hola {name}!"
-
-schema = make_executable_schema(type_defs, query)
+from app.schema import schema
 
 app = Flask(__name__)
+CORS(app)  # Permitir solicitudes desde frontend (CORS)
 
 @app.route("/graphql", methods=["GET"])
 def graphql_playground():
+    # Explorar y probar consultas en navegador
     return ExplorerGraphiQL().html(None), 200
 
 @app.route("/graphql", methods=["POST"])
 def graphql_server():
+    # Recibir y procesar consultas GraphQL
     data = request.get_json()
     success, result = graphql_sync(schema, data, context_value=request, debug=True)
     return jsonify(result)
